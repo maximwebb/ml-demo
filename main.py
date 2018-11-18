@@ -17,9 +17,38 @@ url = "iris.data.txt"
 names = ['sepal-length', 'sepal-width', 'petal-length', 'petal-width', 'class']
 dataset = pd.read_csv(url, names=names)
 
+# Split-out validation dataset
 array = dataset.values
 X = array[:, 0:4]
 Y = array[:, 4]
 validation_size = 0.2
 seed = 7
 X_train, X_validation, Y_train, Y_validation = model_selection.train_test_split(X, Y, test_size=validation_size, random_state=seed)
+
+scoring = 'accuracy'
+
+# Collect algorithms to test
+models = []
+models.append(('LR', LogisticRegression(solver='lbfgs', multi_class='auto', max_iter=300)))
+models.append(('LDA', LinearDiscriminantAnalysis()))
+models.append(('KNN', KNeighborsClassifier()))
+models.append(('CART', DecisionTreeClassifier()))
+models.append(('NB', GaussianNB()))
+models.append(('SVM', SVC(gamma='auto')))
+
+# Evaluate performance of each algorithm
+results = []
+names = []
+for name, model in models:
+	kfold = model_selection.KFold(n_splits=10, random_state=seed)
+	cv_results = model_selection.cross_val_score(model, X_train, Y_train, cv=kfold)
+	results.append(cv_results)
+	names.append(name)
+	msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+	print(msg)
+
+print('\n')
+svm = SVC(gamma='auto')
+svm.fit(X_train, Y_train)
+predictions = svm.predict([5, 3, 1.5])
+print(predictions)
